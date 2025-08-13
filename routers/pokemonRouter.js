@@ -99,6 +99,26 @@ router.patch("/patch/:id", async function (req,res) {
     return res.status(500).json({error:"pailas pana error en la conexion"})
   }
 })
+
+router.delete("/delete/:id", async function (req,res) {
+  try {
+      const idPokemon = parseInt(req.params.id,10);
+  if (!idPokemon) {
+    return res.status(400).json({error:"el id no existe"})
+  }
+  const collection = getDB().collection("pokemones");
+  const result = await collection.deleteOne(
+    {id:idPokemon}
+  );
+  if (result.matchedCount==0) {
+    return res.status(400).json({error:"pokemon no encontrado"})
+  }
+  return res.status(200).json({message:"todo bien fino elegante"})
+  } catch (error) {
+    return res.status(500).json({error:"error en la conexion"})
+  }
+});
+
 export default router;
 
 
