@@ -1,6 +1,7 @@
 // imports
 import { Router } from "express";
 import { getDB } from "../db/config.js";
+import { parse } from "dotenv";
 
 const router = Router();
 
@@ -48,35 +49,56 @@ router.post("/create", async function (req, res) {
 });
 
 router.put("/put/:id", async function (req,res) {
-  const idPokemon= parseInt(req.params.id);
   try {
-    if (!idPokemon) {
-      res.status(400).json({error:"id no valido"})
-    }
-    const pokemon = await getDB().collection.findOne({id:idPokemon})
+    const idPokemon= parseInt(req.params.id,10);
+    const collection = getDB().collection("pokemones");
+    const pokemon = await collection.findOne({id:idPokemon})
     if (!pokemon) {
       return res.status(404).json({error:"pokemon no encontrado"});
     }
-    
-
     const {nombre,habilidad,debilitado}= req.body;
-
     if (!nombre||!habilidad||debilitado===undefined) {
-      res.status(400).json({error: "invalid input"});
+     return res.status(400).json({error: "invalid input"});
     } 
 
-    await getDB().collection.updateOne(
+    const result = await collection.updateOne(
       {id:idPokemon},
-    {$set: {nombre,habilidad,debilitado}}
-    )
+      {$set:{nombre,habilidad,debilitado}}
+    );
 
-    res.status(200).json({message:"pokemon actualizado correctamente"})
+   return res.status(200).json({message:"pokemon actualizado correctamente"})
   } catch (error) {
     console.log(error);
-    res.status(500).json({error:"error en el servidor "})
+    return res.status(500).json({error:"error en el servidor "})
   }
 })
 
+router.patch("/patch/:id", async function (req,res) {
+  try {
+    const idPokemon = parseInt(req.params.id,10);
+    const collection = getDB().collection("pokemones");
+
+    const  {nombre,habilidad,debilitado}= req.body;
+    const update = {}
+    if (nombre !== undefined) update.nombre=nombre;
+    if (habilidad !== undefined) update.habilidad=nombre;
+    if (debilitado !== undefined) update.debilitado=nombre;
+    if (Object.keys(update).length===0) {
+      return res.status(400).json({error:"no hay campos para actualizar"})
+    }
+    const result = await collection.updateOne(
+      {id:idPokemon},
+      {$set:update}
+    );
+    if (result.matchedCount===0) {
+      return res.status(400).json({error:"pokemon no encontrado"})
+    }
+    
+    return res.status(200).json({message:"todo bien pa"})
+  } catch (error) {
+    return res.status(500).json({error:"pailas pana error en la conexion"})
+  }
+})
 export default router;
 
 
